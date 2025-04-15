@@ -1,12 +1,11 @@
 import streamlit as st
-import numpy as np
 import pandas as pd
 import geopandas as gpd
 import osmnx as ox
 import networkx as nx
-from urllib.parse import quote
-import plotly.express as px
 import matplotlib.pyplot as plt
+from urllib.parse import quote
+
 
 def get_Graph(path, city):
     edges = city + "_edges.csv"
@@ -66,23 +65,18 @@ plot_maps = st.button("Plot maps")
 
 if plot_maps:
     column = st.selectbox("Select the desired column:", ["length", "Inverse SP", "Cost of return", "Edge Betweenness", "Groups"])
-    # vmin = min(edges[column])
-    # vmax = max(edges[column])
-    # cmap=plt.cm.jet
-    # fig, axs = plt.subplots(2, 2, figsize = (20,20), constrained_layout=True)
-    # for group,ax in zip(['C','B','A',],[axs[1,0],axs[0,1], axs[0,0]]):
-    #     edges_group = edges[edges["Groups"] == group].sort_values(by = column, ascending=True)
-    #     edges_group.plot(ax = ax, column = column, cmap = cmap, vmin = vmin, vmax = vmax, linewidth = edges_group[column]/vmax*8)
-    #     ax.set_title(f'Group {group}')
-    # edges.sort_values(by = column, ascending=True).plot(ax = axs[1,1], column = column, cmap = cmap, linewidth = edges[column].sort_values(ascending=True)/vmax*8)
-    # axs[1,1].set_title(f'All groups')
-    # sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin = vmin, vmax=vmax))
-    # cbar = plt.colorbar(sm, ax = axs[:], orientation='horizontal', label = column)
-    # cbar.set_label(label=column, size = 30)
-    # st.pyplot(fig)
-    map = edges.explore(column=column)
-    
-
-
-plotly_chart = px.scatter(edges, "Cost of return", "Inverse SP")
-st.plotly_chart(plotly_chart)
+    vmin = min(edges[column])
+    vmax = max(edges[column])
+    cmap=plt.cm.jet
+    fig, axs = plt.subplots(2, 2, figsize = (20,20), constrained_layout=True)
+    for group,ax in zip(['C','B','A',],[axs[1,0],axs[0,1], axs[0,0]]):
+        edges_group = edges[edges["Groups"] == group].sort_values(by = column, ascending=True)
+        edges_group.plot(ax = ax, column = column, cmap = cmap, vmin = vmin, vmax = vmax, linewidth = edges_group[column]/vmax*8)
+        ax.set_title(f'Group {group}')
+    edges.sort_values(by = column, ascending=True).plot(ax = axs[1,1], column = column, cmap = cmap, linewidth = edges[column].sort_values(ascending=True)/vmax*8)
+    axs[1,1].set_title(f'All groups')
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin = vmin, vmax=vmax))
+    cbar = plt.colorbar(sm, ax = axs[:], orientation='horizontal', label = column)
+    cbar.set_label(label=column, size = 30)
+    st.pyplot(fig)
+    # map = edges.explore(column=column)
