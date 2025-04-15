@@ -71,8 +71,15 @@ G, nodes, edges = get_Graph(path_gh, city)
 st.session_state.G = G
 st.session_state.nodes = nodes
 st.session_state.edges = edges
+st.session_state.size_edges = len(edges)
+st.session_state.size_nodes = len(nodes)
 
 # st.dataframe(edges.drop(columns=["geometry"]))
+
+st.write(f'Group A: {sum(st.session_state.edges["Groups"] == "A")/st.session_state.size_edges*100:.2f}\% \
+         Group B: {sum(st.session_state.edges["Groups"] == "B")/st.session_state.size_edges*100:.2f}\%  \
+         Group C: {sum(st.session_state.edges["Groups"] == "C")/st.session_state.size_edges*100:.2f}\% \
+         ')
 
 column = st.selectbox("Select the desired column:", ["length", "Inverse SP", "Cost of return", "Edge Betweenness", "Groups"])
 vmin = min(edges[column])

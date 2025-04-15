@@ -61,22 +61,23 @@ path_gh = 'https://raw.githubusercontent.com/gioguarnieri/CoR/refs/heads/main/Re
 G, nodes, edges = get_Graph(path_gh, city)
 st.dataframe(edges.drop(columns=["geometry"]))
 
-plot_maps = st.button("Plot maps")
+# plot_maps = st.button("Plot maps")
 
-if plot_maps:
-    column = st.selectbox("Select the desired column:", ["length", "Inverse SP", "Cost of return", "Edge Betweenness", "Groups"])
-    vmin = min(edges[column])
-    vmax = max(edges[column])
-    cmap=plt.cm.jet
-    fig, axs = plt.subplots(2, 2, figsize = (20,20), constrained_layout=True)
-    for group,ax in zip(['C','B','A',],[axs[1,0],axs[0,1], axs[0,0]]):
-        edges_group = edges[edges["Groups"] == group].sort_values(by = column, ascending=True)
-        edges_group.plot(ax = ax, column = column, cmap = cmap, vmin = vmin, vmax = vmax, linewidth = edges_group[column]/vmax*8)
-        ax.set_title(f'Group {group}')
-    edges.sort_values(by = column, ascending=True).plot(ax = axs[1,1], column = column, cmap = cmap, linewidth = edges[column].sort_values(ascending=True)/vmax*8)
-    axs[1,1].set_title(f'All groups')
-    sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin = vmin, vmax=vmax))
-    cbar = plt.colorbar(sm, ax = axs[:], orientation='horizontal', label = column)
-    cbar.set_label(label=column, size = 30)
-    st.pyplot(fig)
-    # map = edges.explore(column=column)
+
+# if plot_maps:
+column = st.selectbox("Select the desired column:", ["length", "Inverse SP", "Cost of return", "Edge Betweenness", "Groups"])
+vmin = min(edges[column])
+vmax = max(edges[column])
+cmap=plt.cm.jet
+fig, axs = plt.subplots(2, 2, figsize = (20,20), constrained_layout=True)
+for group,ax in zip(['C','B','A',],[axs[1,0],axs[0,1], axs[0,0]]):
+    edges_group = edges[edges["Groups"] == group].sort_values(by = column, ascending=True)
+    edges_group.plot(ax = ax, column = column, cmap = cmap, vmin = vmin, vmax = vmax, linewidth = edges_group[column]/vmax*8)
+    ax.set_title(f'Group {group}')
+edges.sort_values(by = column, ascending=True).plot(ax = axs[1,1], column = column, cmap = cmap, linewidth = edges[column].sort_values(ascending=True)/vmax*8)
+axs[1,1].set_title(f'All groups')
+sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin = vmin, vmax=vmax))
+cbar = plt.colorbar(sm, ax = axs[:], orientation='horizontal', label = column)
+cbar.set_label(label=column, size = 30)
+st.pyplot(fig)
+# map = edges.explore(column=column)
