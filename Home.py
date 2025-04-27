@@ -6,6 +6,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from urllib.parse import quote
 
+
 st.set_page_config(
     page_title="Streetnets",
     page_icon="🛣️",
@@ -15,10 +16,13 @@ st.title("Streetnets")
 
 st.sidebar.success("Select an analysis above.")
 
-def get_Graph(path, city):
+def get_Graph(path, city, gh = False):
     edges = city + "_edges.csv"
     nodes = city + "_nodes.csv"
-    nodes, edges = pd.read_csv(path + quote(nodes), index_col =[0]), pd.read_csv(path + quote(edges), index_col = [0,1,2])
+    if gh:
+        nodes, edges = pd.read_csv(path + quote(nodes), index_col =[0]), pd.read_csv(path + quote(edges), index_col = [0,1,2])
+    else:
+        nodes, edges = pd.read_csv(path + nodes, index_col =[0]), pd.read_csv(path + edges, index_col = [0,1,2])
     
     # edges = edges[~edges[column].isna()]
     others = ["crossing", "living_street", "unclassified", "disused", "busway", "escape", "road", "ladder"]
@@ -63,16 +67,18 @@ city_list_full = ["São Paulo", # 0
                   ]
 
 
-path_gh = 'https://raw.githubusercontent.com/gioguarnieri/Streetnets/refs/heads/main/csv/'
+# path_gh = 'https://raw.githubusercontent.com/gioguarnieri/Streetnets/refs/heads/main/csv/'
+path_gh = "./csv/"
 
-dict_database = {}
-for city in city_list_full:
-    G, nodes, st.session_state.dict_database[city]["Edges"] = get_Graph(path_gh, city)
-    dict_database[city] = {"City name": city, "Graph": G, "Nodes": nodes, "Edges": st.session_state.dict_database[city]["Edges"]}
 
-st.session_state.dict_database = dict_database
-del(dict_database)
-
+if "dict_database" not in st.session_state:
+    dict_database = {}
+    print("in")
+    for city in city_list_full:
+        G, nodes, edges = get_Graph(path_gh, city)
+        dict_database[city] = {"City name": city, "Graph": G, "Nodes": nodes, "Edges": edges}
+    st.session_state.dict_database = dict_database
+    del(dict_database, nodes, edges)
 city = st.selectbox("Select a city:", city_list_full)
 
 size_edges = len(st.session_state.dict_database[city]["Edges"])
@@ -83,7 +89,7 @@ st.write(f'Group A: {sum(st.session_state.dict_database[city]["Edges"]["Groups"]
          ')
 
 
-column = st.selectbox("Select the desired column:", ["length", "Inverse SP", "Cost of return", "Edge Betweenness", "Groups"])
+column = st.selectbox("Select the desired column:", ["length", "Inverse SP", "Cost of return", "Edge Betweenness"])
 vmin = min(st.session_state.dict_database[city]["Edges"][column])
 vmax = max(st.session_state.dict_database[city]["Edges"][column])
 cmap=plt.cm.jet

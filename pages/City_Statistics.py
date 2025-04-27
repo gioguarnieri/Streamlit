@@ -4,7 +4,6 @@ import geopandas as gpd
 import osmnx as ox
 import networkx as nx
 import plotly.express as px
-from urllib.parse import quote
 
 st.set_page_config(page_title="City Statistics", page_icon="📊")
 
