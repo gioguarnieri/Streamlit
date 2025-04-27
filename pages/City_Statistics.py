@@ -11,33 +11,6 @@ st.set_page_config(page_title="City Statistics", page_icon="📊")
 st.title("City Statistics")
 st.write("This page provides basic statistics for a selected city's street network.")
 
-# Function to get graph data for a city
-def get_city_data(city):
-    path_gh = 'https://raw.githubusercontent.com/gioguarnieri/CoR/refs/heads/main/Results/csv/'
-    edges_file = city + "_edges.csv"
-    nodes_file = city + "_nodes.csv"
-    
-    try:
-        nodes = pd.read_csv(path_gh + quote(nodes_file), index_col=[0])
-        edges = pd.read_csv(path_gh + quote(edges_file), index_col=[0,1,2])
-        
-        # Process data
-        others = ["crossing", "living_street", "unclassified", "disused", "busway", "escape", "road", "ladder"]
-        edges["highway"] = edges.highway.map(lambda x: "other" if x in others else x)
-        
-        # Convert to GeoDataFrames
-        nodes_geo = gpd.GeoSeries.from_wkt(nodes.geometry)
-        nodes_gdf = gpd.GeoDataFrame(data=nodes, geometry=nodes_geo)
-        nodes_gdf = nodes_gdf.set_crs('epsg:4326', allow_override=True)
-        
-        edges_geo = gpd.GeoSeries.from_wkt(edges.geometry)
-        edges_gdf = gpd.GeoDataFrame(data=edges, geometry=edges_geo)
-        edges_gdf = edges_gdf.set_crs('epsg:4326', allow_override=True)
-        
-        return nodes_gdf, edges_gdf
-    except Exception as e:
-        st.error(f"Error loading data for {city}: {str(e)}")
-        return None, None
 
 # City selection
 city_list_full = ["São Paulo", "Rio de Janeiro", "Atlanta", "Manhattan", "Barcelona", 
@@ -55,7 +28,7 @@ group3 = group1 + group2
 if input_method == "Choose from list":
     city = st.selectbox("Select a city:", city_list_full)
 else:
-    city = st.text_input("Enter city name:")
+    input_method = st.radio("Select retrieve method:", ["Point", "Entire city", "City region", "From bounding box", "From polygon", "From XML"])
 
 if city in city_list_full:
     input_method = "Choose from list"
@@ -63,7 +36,7 @@ if city in city_list_full:
 if city:
     # Load data for the selected city
     if input_method == "Choose from list":
-        nodes, edges = get_city_data(city)
+        nodes, edges = st.session_state.dict_database[city]["Nodes"], st.session_state.dict_database[city]["Edges"]
     else:
         G = ox.graph_from_place(city, network_type='drive')
         nodes, edges = ox.graph_to_gdfs(G)
