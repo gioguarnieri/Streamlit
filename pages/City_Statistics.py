@@ -5,7 +5,9 @@ import osmnx as ox
 import networkx as nx
 import plotly.express as px
 
-st.set_page_config(page_title="City Statistics", page_icon="📊")
+st.set_page_config(page_title="City Statistics", 
+                   page_icon="📊",
+                   layout = "wide")
 
 st.title("City Statistics")
 st.write("This page provides basic statistics for a selected city's street network.")
