@@ -6,6 +6,8 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from urllib.parse import quote
 import plotly.express as px
+import plotly.graph_objects as go
+import zipfile
 st.set_page_config(
     page_title="Streetnets",
     page_icon="🛣️",
@@ -97,7 +99,7 @@ size_nodes = len(st.session_state.dict_database[city]["Nodes"])
 
 st.write(f"""
 {city} downtown region has {size_edges} street segments and {size_nodes} intersections/dead ends, 
-within a {2*dist}x{2*dist}km area, where each intersection connects {stats["k_avg"]:.2f} streets in average.
+within a {2*dist/1000:.0f}x{2*dist/1000:.0f}km area, where each intersection connects {stats["k_avg"]:.2f} streets in average.
 
 The average street length in meters is {stats["street_length_avg"]:.2f}m, with a density of {stats["street_density_km"]:.2f}m/km².
 
@@ -129,3 +131,104 @@ sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin = vmin, vmax=vmax)
 cbar = plt.colorbar(sm, ax = axs[:], orientation='horizontal', label = column)
 cbar.set_label(label=column, size = 30)
 st.pyplot(fig)
+
+st.markdown("## All cities stats")
+
+for city in city_list_full[1:]:
+  G = st.session_state.dict_database[city]["Graph"]
+  nodes, edges = ox.graph_to_gdfs(G)
+  area = 8000**2
+  stats = ox.basic_stats(G, area = area)
+  _df = pd.DataFrame.from_dict(stats, orient = 'index', columns = [city])
+  df_cities = df_cities.join(_df)
+
+  l_alpha.append((G.number_of_edges() - G.number_of_nodes()+1)/(2*G.number_of_nodes()-5))
+  l_beta.append(G.number_of_edges()/G.number_of_nodes())
+  l_gamma.append(G.number_of_edges()/(3*(G.number_of_nodes()-2)))
+  _pr = nx.pagerank(G).values()
+  l_pr_max.append(max(_pr))
+  l_pr_min.append(min(_pr))
+  del(_df)
+  del(G)
+
+df_cities = df_cities.T
+df_cities["PageRank Max"] = l_pr_max
+df_cities["PageRank Min"] = l_pr_min
+df_cities["Alpha"] = l_alpha
+df_cities["Beta"] = l_beta
+df_cities["Gamma"] = l_gamma
+df_cut = df_cities.drop(columns = ["streets_per_node_counts", "streets_per_node_proportions"])
+
+normalized_df=(df_cut-df_cut.min())/(df_cut.max()-df_cut.min())                  # normalize the data to better visualize it
+fig = go.Figure()
+cities = []
+
+for column in normalized_df.columns:
+    fig.add_trace(go.Violin(y=normalized_df[column],
+                            name=column,
+                            box_visible=True,
+                            meanline_visible=True,
+                            spanmode = "hard",
+                            )
+    )
+fig.update_layout(
+    # title_text="Normalized stats violin plots",
+    violingap=0.15, violingroupgap=0, violinmode='overlay',
+    width=1500,
+    height=600,
+    font_size = 20,
+    showlegend = False
+    )
+
+fig.update_layout(
+    margin=dict(l=20, r=20, t=45, b=0),
+)
+
+st.plotly_chart(fig)
+
+st.dataframe(df_cut)
+
+def convert_df_to_csv(df):
+    return df.to_csv().encode('utf-8')
+
+bools_checkbox = []
+col1, col2 = st.columns(2)
+with col1:
+    for city in city_list_full:
+        bools_checkbox.append(st.checkbox(city))
+
+with col2:
+    with zipfile.ZipFile('cities.zip', 'x') as csv_zip:
+                    count = 0
+                    for i in bools_checkbox:
+                        if i:
+                            csv_zip.writestr(city_list_full[count]+ "_nodes.csv", convert_df_to_csv(st.session_state.dict_database[city_list_full[count]]["Nodes"]))
+                            csv_zip.writestr(city_list_full[count]+ "_edges.csv", convert_df_to_csv(st.session_state.dict_database[city_list_full[count]]["Edges"]))
+                        count+=1
+                        
+                    with open("cities.zip", "rb") as file:
+                        st.download_button(
+                            label = "Download zip",
+                            data = file,
+                            file_name = "cities.zip",
+                            mime = 'application/zip'
+                    
+                        )
+
+#     csv_nodes = convert_df_to_csv(st.session_state.dict_database[city]["Nodes"].drop(columns=['geometry']))
+#     csv_edges = convert_df_to_csv(st.session_state.dict_database[city]["Edges"].drop(columns=['geometry']))
+#     col1, col2 = st.columns(2)
+#     with col1:
+#         st.download_button(
+#             label=f"Download {city} Nodes Data",
+#             data=csv_nodes,
+#             file_name=f'{city}_nodes_stats.csv',
+#             mime='text/csv',
+#         )
+#     with col2:
+#         st.download_button(
+#             label=f"Download {city} Edges Data",
+#             data=csv_edges,
+#             file_name=f'{city}_edges_stats.csv',
+#             mime='text/csv',
+#         )
